@@ -5,3 +5,6 @@ Created by: [Bernice Lau](https://www.linkedin.com/in/lau-bernice/) and [Josh Fr
 
 ## Description
 Given a database of about 60,000 existing organizations with all categories determined, our program accepts the user-inputted name of an organization and uses a combination of NLP techniques and LLM queries to guess at the categories (i.e. industry, group, business) corresponding to that organization. 
+
+## Design Diagram
+![](design-diagram.png)
