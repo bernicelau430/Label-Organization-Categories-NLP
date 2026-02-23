@@ -70,7 +70,8 @@ df_organizations = df_organizations.drop(columns=["city",
                                             "analysis_flag", 
                                             "lastTouched_ts", 
                                             "source",
-                                            "verified"])
+                                            "verified",
+                                            "org_type"])
 
 df_categories = df_categories.drop(columns=["lastTouched", "source"])
 
@@ -92,6 +93,8 @@ df_cat_long = df_categories.pivot_table(
     aggfunc=lambda x: x.iloc[0]  # take the first value if duplicates exist (gets around uncoded duplicate rows)
 ).reset_index()
 
+print(df_cat_long)
+
 # ensure the values we join on have consistent typing to avoid errors
 
 df_organizations['oid'] = df_organizations['oid'].astype('Int64')
@@ -107,7 +110,6 @@ df_org_categories = df_organizations.merge(df_cat_long, on="oid", how="inner")
 
 df_full = df_org_categories.merge(df_concepts, on='oc_id', how='left', suffixes=('_org', '_concept'))
 
-# show results 
+# write results to file
 
-print(df_full)
-print(df_full.columns)
+df_full.to_csv("data/processed/OrganizationsFull.tsv", sep="\t")
