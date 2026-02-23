@@ -39,8 +39,6 @@ df_categories = pd.read_csv(
     ],
     engine='python')
 
-num_unique = df_categories['oid'].nunique()
-
 # weird fields are denoted by ghost --> LOOK INTO
 df_concepts = pd.read_csv(
     'data/clean/OrgConcept.tsv', 
@@ -92,8 +90,6 @@ df_cat_long = df_categories.pivot_table(
     values='category',
     aggfunc=lambda x: x.iloc[0]  # take the first value if duplicates exist (gets around uncoded duplicate rows)
 ).reset_index()
-
-print(df_cat_long)
 
 # ensure the values we join on have consistent typing to avoid errors
 
