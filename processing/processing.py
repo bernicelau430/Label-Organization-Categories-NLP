@@ -4,12 +4,12 @@ import tsv_cleaner
 
 # clean the tsv files as necessary
 
-tsv_cleaner.clean_tsv("data/raw/Organizations.tsv", "data/clean/Organizations.tsv")
+tsv_cleaner.clean_tsv("../data/raw/Organizations.tsv", "../data/clean/Organizations.tsv")
 
 # read each tsv file into a pandas df
 
 df_organizations = pd.read_csv(
-    'data/clean/Organizations.tsv', 
+    '../data/clean/Organizations.tsv', 
     sep='\t', 
     names=[
         'oid',
@@ -28,7 +28,7 @@ df_organizations = pd.read_csv(
     engine='python')
 
 df_categories = pd.read_csv(
-    'data/clean/OrgCategories.tsv', 
+    '../data/clean/OrgCategories.tsv', 
     sep='\t', 
     names=[
         'oid',
@@ -41,7 +41,7 @@ df_categories = pd.read_csv(
 
 # weird fields are denoted by ghost --> LOOK INTO
 df_concepts = pd.read_csv(
-    'data/clean/OrgConcept.tsv', 
+    '../data/clean/OrgConcept.tsv', 
     sep='\t', 
     names=[
         'oc_id',
@@ -108,4 +108,4 @@ df_full = df_org_categories.merge(df_concepts, on='oc_id', how='left', suffixes=
 
 # write results to file
 
-df_full.to_csv("data/processed/OrganizationsFull.tsv", sep="\t")
+df_full.to_csv("../data/processed/OrganizationsFull.tsv", sep="\t")
