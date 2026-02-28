@@ -26,9 +26,9 @@ Main data processing pipeline that:
 6. Outputs final processed dataset
 
 **Input:**
-- `../data/raw/Organizations.tsv`
-- `../data/raw/OrgCategories.tsv`
-- `../data/raw/OrgConcept.tsv`
+- `../data/clean/Organizations.tsv`
+- `../data/clean/OrgCategories.tsv`
+- `../data/clean/OrgConcept.tsv`
 
 **Output:**
 - `../data/processed/OrganizationsFull.tsv` (18,626 rows × 9 columns)
