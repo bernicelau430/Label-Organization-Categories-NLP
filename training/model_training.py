@@ -336,6 +336,12 @@ class OrganizationCategorizer:
     
     def save_model(self, filepath):
         """ Save the trained model """
+        # create model directory if it doesn't exist
+        import os
+        directory = os.path.dirname(filepath)
+        if directory:
+            os.makedirs(directory, exist_ok=True)
+
         model_data = {
             'vectorizer': self.vectorizer,
             'train_vectors': self.train_vectors,
