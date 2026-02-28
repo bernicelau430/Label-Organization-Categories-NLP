@@ -348,7 +348,8 @@ class OrganizationCategorizer:
             'train_df': self.train_df,
             'concept_map': self.concept_map,
             'k': self.k,
-            'similarity_threshold': self.similarity_threshold
+            'similarity_threshold': self.similarity_threshold,
+            'metrics': self.metrics if hasattr(self, 'metrics') else None
         }
         with open(filepath, 'wb') as f:
             pickle.dump(model_data, f)
@@ -409,6 +410,9 @@ def main():
     
     # evaluate
     metrics = model.evaluate(test_df)
+
+    # store metrics in model for later retrieval if needed
+    model.metrics = metrics
     
     # save model
     model.save_model("../model/org_categorizer_model.pkl")
