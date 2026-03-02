@@ -141,7 +141,7 @@ class OrganizationCategorizer:
         
         return ' '.join(features)
     
-    def fit(self, df):
+    def fit(self, df, analyzer="word", ngram_range=(1, 3), min_df=2, max_df=0.9, sublinear_tf=True):
         """
         Train the model on the provided dataset
            df columns: ['name_org', 'oc_id', 'Business', 'Group', 'Industry']
@@ -173,10 +173,11 @@ class OrganizationCategorizer:
         print("Creating TF-IDF vectors...")
         self.vectorizer = TfidfVectorizer(
             max_features=5000,  # increased from default
-            ngram_range=(1, 3),  # unigrams, bigrams, and trigrams
-            min_df=2,  # ignore terms that appear in fewer than 2 documents
-            max_df=0.8,  # ignore terms that appear in more than 80% of documents
-            sublinear_tf=True,  # use logarithmic term frequency
+            analyzer=analyzer,
+            ngram_range=ngram_range,  # unigrams, bigrams, and trigrams
+            min_df=min_df,  # ignore terms that appear in fewer than 2 documents
+            max_df=max_df,  # ignore terms that appear in more than 80% of documents
+            sublinear_tf=sublinear_tf,  # use logarithmic term frequency
             norm='l2'  # L2 normalization
         )
         
@@ -369,7 +370,7 @@ class OrganizationCategorizer:
         print(f"Model loaded from {filepath}")
 
 
-def main():
+def main(k_val=5, analyzer="word", ngram_range=(1, 3), min_df=2, max_df=0.9, sublinear_tf=True):
     # load processed data
     print("Loading data...")
     df = pd.read_csv("../data/processed/OrganizationsFull.tsv", sep="\t", index_col=0)
@@ -402,11 +403,11 @@ def main():
     
     # train model with arbitrary k value
     print("\n" + "="*50)
-    print("Training model with k=7...")
+    print(f"Training model with k={k_val}...")
     print("="*50)
     
-    model = OrganizationCategorizer(k=7, similarity_threshold=0.05)
-    model.fit(train_df)
+    model = OrganizationCategorizer(k=k_val, similarity_threshold=0.05)
+    model.fit(train_df, analyzer, ngram_range, min_df, max_df, sublinear_tf)
     
     # evaluate
     metrics = model.evaluate(test_df)
@@ -436,6 +437,8 @@ def main():
         print(f"  Industry: {pred['Industry']}")
         print(f"  Similar organizations: {[org['name'] for org in pred['similar_orgs'][:3]]}")
 
+    return metrics
+
 
 if __name__ == "__main__":
-    main()
+    main(3, "word", (1, 1), 1, 0.8, True)
