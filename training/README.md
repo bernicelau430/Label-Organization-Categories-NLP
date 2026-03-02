@@ -5,11 +5,23 @@ This directory contains all machine learning model training, evaluation, and opt
 ## Files
 
 ### `model_training.py` 
-**Main Implementation**
+Base model implementation with tuned hyperparameters determined by `hyperparameter_tuning.py`
 
-Complete OrganizationCategorizer class with advanced NLP features.
+**Accuracy and F1 Scores of the Tuned Model (k=3)**
 
-**Accuracy and F1 Scores**
+- Business Classification:
+   - Accuracy: 
+   - Macro F1: 
+- Group Classification:
+   - Accuracy: 
+   - Macro F1: 
+- Industry Classification:
+   - Accuracy: 
+   - Macro F1: 
+
+Overall Accuracy: 
+
+**Accuracy and F1 Scores of the Base Model (k=7)**
 
 - Business Classification:
    - Accuracy: 0.8090
