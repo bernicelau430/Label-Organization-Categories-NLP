@@ -20,6 +20,13 @@ python processing.py
 cd ..
 ```
 
+### Tune Hyperparameters
+```bash
+cd training
+python hyperparameter_tuning.py
+cd ..
+```
+
 ### Train and Run the Model
 ```bash
 cd training
