@@ -54,10 +54,10 @@ python model_training.py
 - Saves model to `../model/org_categorizer_model.pkl`
 
 
-## Random Forest Model
+## Random Forest Model (Data Split by Concept)
 
 ### `random_forest_model.py` 
-Base Random Forest model implementation.
+Base Random Forest model implementation with the train-test subsets split by concept.
 
 **Accuracy and F1 Scores of the Random Forest Model**
 
