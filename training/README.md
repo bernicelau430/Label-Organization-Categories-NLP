@@ -99,10 +99,10 @@ Base KNN model implementation with the train-test subsets split by concept.
    - Accuracy: 0.6425
    - Macro F1: 0.5147
 - Industry Classification:
-   - Accuracy: 0.5413
+   - Accuracy: 0.5504
    - Macro F1: 0.3504
 
-Overall Accuracy: 0.5746
+Overall Accuracy: 0.5413
 
 **Usage:**
 ```bash
