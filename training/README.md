@@ -114,3 +114,47 @@ python knn_model_v2.py
 - Trains model with optimized parameters
 - Evaluates on test set
 - Saves model to `../model/org_categorizer_knn_model_v2.pkl`
+
+
+## KNN Model v3 (Handles Data Leakage and Generalizes to No-Concept Organizations)
+
+### `knn_model_v3.py`
+Enhanced KNN model designed to reduce train-test leakage and support organizations that do not have a concept ID.
+
+**Key changes from KNN v2:**
+- Leakage-aware split groups:
+   - Uses `oc_id` when present
+   - Falls back to normalized organization name when `oc_id` is missing
+   - Splits are performed at the group level (not raw row level) to avoid near-duplicate leakage
+- No-concept organization support:
+   - Keeps organizations with missing `oc_id` in train/test instead of dropping them
+   - Predicts `Business`, `Group`, and `Industry` directly using weighted neighbor voting
+- Additional word-sensitive feature engineering:
+   - Explicit handling for legal/entity and membership-style words (e.g., `inc`, `corp`, `group`, `association`, `chapter`, `union`)
+   - Common-word analysis utility to show how broadly frequent words are distributed across industries
+
+**Accuracy and F1 Scores of the KNN v3 Model**
+
+- Business Classification:
+   - Accuracy: 0.6327
+   - Macro F1: 0.5405
+- Group Classification:
+   - Accuracy: 0.8031
+   - Macro F1: 0.7887
+- Industry Classification:
+   - Accuracy: 0.7192
+   - Macro F1: 0.6557
+
+Overall Accuracy: 0.7183
+
+**Usage:**
+```bash
+cd training
+python knn_model_v3.py
+```
+
+**Output:**
+- Trains leakage-aware KNN model
+- Evaluates on leakage-resistant test set
+- Prints common-word behavior analysis
+- Saves model to `../model/org_categorizer_knn_model_v3.pkl`
