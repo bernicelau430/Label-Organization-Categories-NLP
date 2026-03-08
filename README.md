@@ -33,5 +33,8 @@ cd training
 python model_training.py
 ```
 
-## Design Diagram
-![](design_diagram.png)
+## KNN (v1) Model Design Diagram
+![](model_training_design_diagram.png)
+
+## KNN (v3) Revised Model Design Diagram
+![](knn_model_v3_design_diagram.png)
