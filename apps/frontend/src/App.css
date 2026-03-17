@@ -1,0 +1,134 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+  background: #f7f8fa;
+  color: #111827;
+}
+
+body {
+  background: #f4f6fb;
+  color: #1a1a1a;
+}
+
+.page {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.card {
+  width: 100%;
+  max-width: 900px;
+  padding: 32px 36px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+.header h1 {
+  font-size: 26px;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.header p {
+  color: #4b5563;
+  margin-bottom: 28px;
+  line-height: 1.5;
+}
+
+.form {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.form input {
+  flex: 1;
+  padding: 12px 14px;
+  font-size: 15px;
+  border-radius: 8px;
+  border: 1px solid #dcdfe6;
+  background: #fafbfe;
+  color: #111827;
+  transition: border 0.2s, background 0.2s;
+}
+
+.form input:focus {
+  outline: none;
+  border-color: #4f6df5;
+  background: white;
+}
+
+.form button {
+  padding: 12px 20px;
+  font-size: 15px;
+  background: #4f6df5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s, transform 0.05s;
+}
+
+.form button:hover {
+  background: #3f5be0;
+}
+
+.form button:active {
+  transform: translateY(1px);
+}
+
+.form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.results {
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  margin-top: 24px;
+}
+
+.result-card {
+  flex: 1;
+  padding: 16px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+}
+
+.result-label {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.result-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.similar-section {
+  margin-top: 40px; /* creates the larger gap */
+}

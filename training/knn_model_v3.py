@@ -36,8 +36,11 @@ class OrganizationCategorizerV3:
     def __init__(self, k=3, similarity_threshold=0.05):
         self.k = k
         self.similarity_threshold = similarity_threshold
-        self.vectorizer = None
-        self.train_vectors = None
+        self.word_vectorizer = None
+        self.char_vectorizer = None
+        self.word_train_vectors = None
+        self.char_train_vectors = None
+
         self.train_df = None
         self.stop_words = set(stopwords.words('english'))
 
@@ -138,7 +141,7 @@ class OrganizationCategorizerV3:
 
         return ' '.join(features)
 
-    def fit(self, df, analyzer="word", ngram_range=(1, 1), min_df=1, max_df=0.8, sublinear_tf=True):
+    def fit(self, df, word_ngram=(1, 1), char_ngram = (3, 5), min_conf=0.0):
         """ Train model """
         print("Preprocessing training data...")
 
@@ -157,18 +160,32 @@ class OrganizationCategorizerV3:
         print(f"Training samples: {len(self.train_df)}")
         print(f"Unique split groups: {self.train_df['split_group_id'].nunique()}")
 
-        print("Creating TF-IDF vectors...")
-        self.vectorizer = TfidfVectorizer(
+        print("Creating word TF-IDF vectors...")
+        self.word_vectorizer = TfidfVectorizer(
             max_features=5000,
-            analyzer=analyzer,
-            ngram_range=ngram_range,
-            min_df=min_df,
-            max_df=max_df,
-            sublinear_tf=sublinear_tf,
+            analyzer="word",
+            ngram_range=word_ngram,
+            min_df=1,
+            max_df=0.8,
+            sublinear_tf=True,
             norm='l2'
         )
 
-        self.train_vectors = self.vectorizer.fit_transform(self.train_df['combined_text'])
+        self.word_train_vectors = self.word_vectorizer.fit_transform(self.train_df['combined_text'])
+
+        print("Creating char TF-IDF vectors...")
+
+        self.char_vectorizer = TfidfVectorizer(
+            analyzer="char_wb",
+            ngram_range=char_ngram,
+            min_df=1,
+            max_df=0.8,
+            max_features=5000,
+            sublinear_tf=True
+        )
+
+        self.char_train_vectors = self.char_vectorizer.fit_transform(self.train_df['combined_text'])
+
         print("Model training complete!")
 
     @staticmethod
@@ -183,66 +200,69 @@ class OrganizationCategorizerV3:
         total_score = sum(score for _, score in ranked)
         confidence = top_score / total_score if total_score > 0 else 0.0
         return top_label, confidence, ranked
+    
+    def predict_with_vectors(self, query_vector, train_vectors):
+        similarities = cosine_similarity(query_vector, train_vectors)[0]
 
-    def predict(self, org_name, return_alternatives=False):
-        """ Predict categories using weighted neighbor voting """
-        processed_name = self.preprocess_text(org_name)
-        features = self.extract_features(org_name)
-        combined_text = processed_name + ' ' + features
+        candidate_idx = np.argsort(similarities)[::-1][:self.k]
 
-        query_vector = self.vectorizer.transform([combined_text])
-        similarities = cosine_similarity(query_vector, self.train_vectors)[0]
+        if len(candidate_idx) == 0:
+            return None
 
-        candidate_idx = np.argsort(similarities)[::-1][:self.k * 5]
-        top_k_indices = [i for i in candidate_idx if similarities[i] >= self.similarity_threshold][:self.k]
+        neighbor_df = self.train_df.iloc[candidate_idx].copy()
+        neighbor_df['similarity'] = [float(similarities[i]) for i in candidate_idx]
 
-        if len(top_k_indices) == 0:
-            fallback = {
-                'Business': self.train_df['Business'].mode()[0],
-                'Group': self.train_df['Group'].mode()[0],
-                'Industry': self.train_df['Industry'].mode()[0],
-                'confidence': 0.0,
-                'similar_orgs': []
-            }
-            return fallback
+        business, b_conf, _ = self._weighted_vote(neighbor_df, 'Business')
+        group, g_conf, _ = self._weighted_vote(neighbor_df, 'Group')
+        industry, i_conf, _ = self._weighted_vote(neighbor_df, 'Industry')
 
-        neighbor_df = self.train_df.iloc[top_k_indices].copy()
-        neighbor_df['similarity'] = [float(similarities[i]) for i in top_k_indices]
-
-        business, b_conf, b_ranked = self._weighted_vote(neighbor_df, 'Business')
-        group, g_conf, g_ranked = self._weighted_vote(neighbor_df, 'Group')
-        industry, i_conf, i_ranked = self._weighted_vote(neighbor_df, 'Industry')
-
-        result = {
+        return {
             'Business': business,
             'Group': group,
             'Industry': industry,
             'confidence': float(np.mean([b_conf, g_conf, i_conf])),
-            'confidence_by_category': {
-                'Business': float(b_conf),
-                'Group': float(g_conf),
-                'Industry': float(i_conf),
-            },
             'similar_orgs': [
                 {
                     'name': row['name_org'],
-                    'similarity': float(row['similarity']),
-                    'oc_id': None if pd.isna(row['oc_id']) else int(row['oc_id'])
+                    'similarity': float(row['similarity'])
                 }
-                for _, row in neighbor_df.sort_values('similarity', ascending=False).head(5).iterrows()
+                for _, row in neighbor_df.sort_values(
+                    'similarity', ascending=False
+                ).head(5).iterrows()
             ]
         }
 
-        if return_alternatives:
-            result['alternatives'] = {
-                'Business': [label for label, _ in b_ranked[1:4]],
-                'Group': [label for label, _ in g_ranked[1:4]],
-                'Industry': [label for label, _ in i_ranked[1:4]],
-            }
+    def predict(self, org_name, min_conf):
+        """ Predict categories using weighted neighbor voting """
+
+        processed_name = self.preprocess_text(org_name)
+        features = self.extract_features(org_name)
+        combined_text = processed_name + ' ' + features
+
+        query_vector = self.word_vectorizer.transform([combined_text])
+
+        result = self.predict_with_vectors(
+            query_vector,
+            self.word_train_vectors
+        )
+
+        if result['confidence'] <= min_conf:
+
+            query_vector = self.char_vectorizer.transform([combined_text])
+
+            result = self.predict_with_vectors(
+                query_vector,
+                self.char_train_vectors
+            )
+
+            result['model_used'] = "char_ngram"
+
+        else:
+            result['model_used'] = "word_ngram"
 
         return result
 
-    def evaluate(self, test_df):
+    def evaluate(self, test_df, min_conf):
         """ Evaluate model on held-out test data """
         print("\nEvaluating model...")
 
@@ -255,7 +275,7 @@ class OrganizationCategorizerV3:
             if idx % 1000 == 0:
                 print(f"Processed {idx}/{len(test_df)} samples...")
 
-            pred = self.predict(row['name_org'])
+            pred = self.predict(row['name_org'], min_conf)
 
             predictions['Business'].append(pred['Business'])
             predictions['Group'].append(pred['Group'])
@@ -293,27 +313,36 @@ class OrganizationCategorizerV3:
             os.makedirs(directory, exist_ok=True)
 
         model_data = {
-            'vectorizer': self.vectorizer,
-            'train_vectors': self.train_vectors,
-            'train_df': self.train_df,
-            'k': self.k,
-            'similarity_threshold': self.similarity_threshold,
-            'metrics': self.metrics if hasattr(self, 'metrics') else None
+            "word_vectorizer": self.word_vectorizer,
+            "char_vectorizer": self.char_vectorizer,
+            "word_train_vectors": self.word_train_vectors,
+            "char_train_vectors": self.char_train_vectors,
+            "train_df": self.train_df,
+            "k": self.k,
+            "similarity_threshold": self.similarity_threshold,
+            "metrics": getattr(self, "metrics", None)
         }
-        with open(filepath, 'wb') as f:
+
+        with open(filepath, "wb") as f:
             pickle.dump(model_data, f)
         print(f"Model saved to {filepath}")
 
     def load_model(self, filepath):
         """ Load trained model """
-        with open(filepath, 'rb') as f:
+
+        with open(filepath, "rb") as f:
             model_data = pickle.load(f)
 
-        self.vectorizer = model_data['vectorizer']
-        self.train_vectors = model_data['train_vectors']
-        self.train_df = model_data['train_df']
-        self.k = model_data['k']
-        self.similarity_threshold = model_data['similarity_threshold']
+        self.word_vectorizer = model_data["word_vectorizer"]
+        self.char_vectorizer = model_data["char_vectorizer"]
+
+        self.word_train_vectors = model_data["word_train_vectors"]
+        self.char_train_vectors = model_data["char_train_vectors"]
+
+        self.train_df = model_data["train_df"]
+        self.k = model_data["k"]
+        self.similarity_threshold = model_data["similarity_threshold"]
+
         print(f"Model loaded from {filepath}")
 
 
@@ -396,7 +425,7 @@ def analyze_common_word_behavior(df, preprocessor):
         )
 
 
-def main(k_val=3, analyzer="word", ngram_range=(1, 1), min_df=1, max_df=0.8, sublinear_tf=True):
+def main(k_val=3, word_gram=(1, 1), char_gram=(3,5), min_conf=0.0):
     print("Loading data...")
     df = pd.read_csv("../data/processed/OrganizationsFull.tsv", sep="\t", index_col=0)
 
@@ -409,7 +438,7 @@ def main(k_val=3, analyzer="word", ngram_range=(1, 1), min_df=1, max_df=0.8, sub
     print(f"Orgs with concept id: {df['oc_id'].notna().sum()}")
     print(f"Orgs without concept id: {df['oc_id'].isna().sum()}")
 
-    model = OrganizationCategorizerV3(k=k_val, similarity_threshold=0.05)
+    model = OrganizationCategorizerV3(k=k_val, similarity_threshold=0.00)
 
     train_df, test_df, removed_industries = leakage_aware_train_test_split(
         df,
@@ -432,8 +461,8 @@ def main(k_val=3, analyzer="word", ngram_range=(1, 1), min_df=1, max_df=0.8, sub
     print(f"Training model with k={k_val}...")
     print("=" * 60)
 
-    model.fit(train_df, analyzer, ngram_range, min_df, max_df, sublinear_tf)
-    metrics = model.evaluate(test_df)
+    model.fit(train_df, word_gram, char_gram, min_conf)
+    metrics = model.evaluate(test_df, min_conf)
 
     model.metrics = metrics
     model.save_model("../model/org_categorizer_knn_model_v3.pkl")
@@ -449,7 +478,7 @@ def main(k_val=3, analyzer="word", ngram_range=(1, 1), min_df=1, max_df=0.8, sub
     ]
 
     for name in test_names:
-        pred = model.predict(name, return_alternatives=True)
+        pred = model.predict(name, min_conf)
         print(f"\nOrganization: {name}")
         print(f"  Business: {pred['Business']}")
         print(f"  Group: {pred['Group']}")
@@ -461,4 +490,4 @@ def main(k_val=3, analyzer="word", ngram_range=(1, 1), min_df=1, max_df=0.8, sub
 
 
 if __name__ == "__main__":
-    main(3, "word", (1, 1), 1, 0.8, True)
+    main(3, (1,1), (3,5), 0.47)
