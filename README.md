@@ -41,6 +41,7 @@ uvicorn apps.api.app:app --reload
 In another terminal:
 ```bash
 cd code/apps/frontend
+npm install
 npm run dev
 ```
 
