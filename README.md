@@ -10,7 +10,7 @@ Given a database of about 60,000 existing organizations with all categories dete
 
 ### Installation
 ```bash
-pip install -r requirements.txt
+pip install -r environment.txt
 ```
 
 ### Process Data
@@ -22,19 +22,30 @@ cd ..
 
 ### Tune Hyperparameters
 ```bash
-cd training
+cd code/training
 python hyperparameter_tuning.py
 cd ..
 ```
 
 ### Train and Run the Model
 ```bash
-cd training
-python model_training.py
+cd code/training
+python knn_model_v3.py
+```
+
+### Running the webapp
+```bash
+cd code 
+uvicorn apps.api.app:app --reload
+```
+In another terminal:
+```bash
+cd code/apps/frontend
+npm run dev
 ```
 
 ## KNN (v1) Model Design Diagram
-![](model_training_design_diagram.png)
+![](report/model_training_design_diagram.png)
 
 ## KNN (v3) Revised Model Design Diagram
-![](knn_model_v3_design_diagram.png)
+![](report/knn_model_v3_design_diagram.png)
