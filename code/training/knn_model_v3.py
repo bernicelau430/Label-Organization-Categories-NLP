@@ -446,7 +446,6 @@ def main(k_val=3, word_gram=(1, 1), char_gram=(3,5), min_conf=0.0):
         test_size=0.20,
         random_state=42
     )
-    print(test_df['name_org'].head(50))
 
     overlap = set(train_df['split_group_id']) & set(test_df['split_group_id'])
 
